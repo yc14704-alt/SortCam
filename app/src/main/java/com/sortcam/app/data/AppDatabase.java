@@ -72,6 +72,14 @@ public class AppDatabase extends SQLiteOpenHelper {
         }
     }
 
+    public boolean isLinkedPhoto(long photoId) {
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT 1 FROM photo_imports i JOIN photos p ON p.id=i.photo_id WHERE p.id=? AND i.source_uri=p.uri",
+                new String[]{String.valueOf(photoId)})) {
+            return c.moveToFirst();
+        }
+    }
+
     public boolean hasPhotoUri(String uri) {
         try (Cursor c = getReadableDatabase().rawQuery("SELECT 1 FROM photos WHERE uri=?", new String[]{uri})) {
             return c.moveToFirst();
