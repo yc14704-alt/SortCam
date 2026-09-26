@@ -110,8 +110,22 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton btnSwitchCamera;
     private PhotoImportModel importModel;
     private boolean searchAny;
-    private final ActivityResultLauncher<PickVisualMediaRequest> galleryPicker = registerForActivityResult(
-            new ActivityResultContracts.PickMultipleVisualMedia(100), this::chooseImportCategory);
+    // ACTION_OPEN_DOCUMENT returns the selected MediaStore/content URI and supports
+    // persistable read permission.  SortCam stores only this URI; it never copies the
+    // selected image into its own folder.
+    private final ActivityResultLauncher<Intent> galleryPicker = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() != RESULT_OK || result.getData() == null) return;
+                Intent data = result.getData();
+                List<Uri> selected = new ArrayList<>();
+                if (data.getClipData() != null) {
+                    ClipData clip = data.getClipData();
+                    for (int i = 0; i < clip.getItemCount(); i++) selected.add(clip.getItemAt(i).getUri());
+                } else if (data.getData() != null) {
+                    selected.add(data.getData());
+                }
+                chooseImportCategory(selected);
+            });
     private Button btnCloseLibrary;
     private Button btnFilterAll;
     private Button btnFilterPhotos;
@@ -202,7 +216,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupActions() {
         findViewById(R.id.btnImportPhotos).setOnClickListener(v -> {
-            if (!importModel.isRunning()) galleryPicker.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build());
+            if (importModel.isRunning()) return;
+            Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            pick.addCategory(Intent.CATEGORY_OPENABLE);
+            pick.setType("image/*");
+            pick.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            pick.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            galleryPicker.launch(pick);
         });
         ((RadioGroup) findViewById(R.id.searchMode)).setOnCheckedChangeListener((group, checked) -> {
             searchAny = checked == R.id.searchAny;
@@ -243,11 +263,11 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle(uris.size() + "장 · 저장할 분류 선택")
                 .setItems(labels, (dialog, which) -> {
                     Category category = categories.get(which);
-                    importModel.start(uris, category.id, mediaPathFor(PhotoRecord.TYPE_PHOTO, category.name));
+                    importModel.start(uris, category.id);
                 })
                 .setNegativeButton("취소", null)
                 .show();
-        Toast.makeText(this, "원본은 유지하고 SortCam에 복사한 뒤 글자·숫자를 인식합니다.", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "사진을 복사하지 않고 원본을 연결해 글자·숫자를 인식합니다.", Toast.LENGTH_LONG).show();
     }
 
     private void reloadCategories() {
@@ -729,6 +749,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void editMedia(PhotoRecord media) {
+        if (db.isLinkedPhoto(media.id)) {
+            new AlertDialog.Builder(this).setTitle("연결된 원본 사진")
+                    .setMessage("원본 편집은 휴대폰 갤러리에서 해주세요. 편집 후에는 OCR 다시 읽기로 검색 내용을 갱신할 수 있습니다.")
+                    .setPositiveButton("사진 열기", (d, w) -> openMedia(media)).setNegativeButton("취소", null).show();
+            return;
+        }
         try {
             Uri uri = Uri.parse(media.uri);
             Intent edit = new Intent(Intent.ACTION_EDIT);
@@ -749,7 +775,7 @@ public class MainActivity extends AppCompatActivity {
         if (media.isVideo()) {
             items = new String[]{"동영상 보기", "공유", "동영상 편집", "태그·메모 수정", "분류 이동", "삭제"};
         } else {
-            items = new String[]{"사진 보기", "공유", "사진 편집", "태그·메모 수정", "OCR 다시 읽기", "분류 이동", "삭제"};
+            items = new String[]{"사진 보기", "공유", "사진 편집", "태그·메모 수정", "OCR 다시 읽기", "분류 이동", db.isLinkedPhoto(media.id) ? "연결 해제 (원본 유지)" : "삭제"};
         }
         new AlertDialog.Builder(this)
                 .setTitle(media.isVideo() ? "동영상 관리" : "사진 관리")
@@ -881,7 +907,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         ContentValues cv = new ContentValues();
                         cv.put(MediaStore.MediaColumns.RELATIVE_PATH, mediaPathFor(media.mediaType, target.name));
-                        getContentResolver().update(Uri.parse(media.uri), cv, null, null);
+                        if (!db.isLinkedPhoto(media.id)) getContentResolver().update(Uri.parse(media.uri), cv, null, null);
                     } catch (Exception ignored) {
                         // Database category still changes if an OEM blocks physical folder moves.
                     }
@@ -894,19 +920,33 @@ public class MainActivity extends AppCompatActivity {
 
     private void confirmDeleteMedia(PhotoRecord media) {
         String mediaName = media.isVideo() ? "동영상" : "사진";
+        boolean linked = db.isLinkedPhoto(media.id);
         new AlertDialog.Builder(this)
-                .setTitle(mediaName + " 삭제")
-                .setMessage("휴대폰 갤러리의 원본 " + mediaName + "과 SortCam 검색정보를 함께 삭제할까요?")
+                .setTitle(linked ? "사진 연결 해제" : mediaName + " 삭제")
+                .setMessage(linked ? "SortCam에서 연결과 검색정보만 제거합니다. 갤러리 원본 사진은 그대로 남습니다." : "휴대폰 갤러리의 원본 " + mediaName + "과 SortCam 검색정보를 함께 삭제할까요?")
                 .setNegativeButton("취소", null)
-                .setPositiveButton("삭제", (d, w) -> {
-                    try { getContentResolver().delete(Uri.parse(media.uri), null, null); } catch (Exception ignored) {}
+                .setPositiveButton(linked ? "연결 해제" : "삭제", (d, w) -> {
+                    if (linked) {
+                        try { getContentResolver().releasePersistableUriPermission(Uri.parse(media.uri), Intent.FLAG_GRANT_READ_URI_PERMISSION); }
+                        catch (Exception ignored) { }
+                    } else {
+                        try {
+                            if (getContentResolver().delete(Uri.parse(media.uri), null, null) < 1) {
+                                Toast.makeText(this, "원본을 삭제하지 못했습니다.", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                        } catch (Exception error) {
+                            Toast.makeText(this, "원본을 삭제하지 못했습니다.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
                     db.deletePhoto(media.id);
                     if (quickMediaId == media.id) {
                         quickMediaId = -1L;
                         quickSaveBar.setVisibility(View.GONE);
                     }
                     loadMedia();
-                    Toast.makeText(this, mediaName + "을 삭제했습니다.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, linked ? "연결을 해제했습니다. 원본은 유지됩니다." : mediaName + "을 삭제했습니다.", Toast.LENGTH_SHORT).show();
                 })
                 .show();
     }
@@ -968,6 +1008,7 @@ public class MainActivity extends AppCompatActivity {
     private void moveMediaForCategory(long categoryId, String destinationCategoryName) {
         List<PhotoRecord> media = db.getPhotosByCategory(categoryId);
         for (PhotoRecord item : media) {
+            if (db.isLinkedPhoto(item.id)) continue;
             try {
                 ContentValues cv = new ContentValues();
                 cv.put(MediaStore.MediaColumns.RELATIVE_PATH, mediaPathFor(item.mediaType, destinationCategoryName));
