@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="104dp"
+    android:layout_height="70dp"
+    android:layout_marginEnd="8dp"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="6dp"
+    android:background="@drawable/bg_category"
+    android:clickable="true"
+    android:focusable="true">
+    <TextView
+        android:id="@+id/txtCategoryEmoji"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="💼"
+        android:textSize="22sp" />
+    <TextView
+        android:id="@+id/txtCategoryName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:gravity="center"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="업무"
+        android:textColor="@color/sc_text"
+        android:textSize="13sp" />
+</LinearLayout>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+        <TextView
+            android:id="@+id/txtDialogCategory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textColor="@color/sc_text"
+            android:textSize="16sp" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="자동 태그 #사진 / #동영상은 항상 유지됩니다. 예: #회의 #보증서 #여행 #택배"
+            android:textColor="@color/sc_muted"
+            android:textSize="12sp" />
+        <EditText
+            android:id="@+id/editTags"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="6dp"
+            android:hint="해시태그"
+            android:singleLine="true"
+            android:inputType="text"
+            android:padding="10dp"
+            android:background="@drawable/bg_secondary_button" />
+        <EditText
+            android:id="@+id/editMemo"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="10dp"
+            android:hint="간단 메모 (예: 노트북 보증서, 회의 화이트보드)"
+            android:singleLine="true"
+            android:inputType="text"
+            android:padding="10dp"
+            android:background="@drawable/bg_secondary_button" />
+        <TextView
+            android:id="@+id/txtOcrLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="사진에서 자동으로 읽은 글자"
+            android:textStyle="bold"
+            android:textColor="@color/sc_text"
+            android:textSize="13sp" />
+        <EditText
+            android:id="@+id/editOcr"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:layout_marginTop="6dp"
+            android:gravity="top|start"
+            android:hint="OCR 결과가 여기에 표시됩니다. 필요하면 수정할 수 있습니다."
+            android:inputType="textMultiLine"
+            android:padding="10dp"
+            android:background="@drawable/bg_secondary_button" />
+        <TextView
+            android:id="@+id/txtIndexPreview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:padding="10dp"
+            android:background="@color/sc_background"
+            android:textColor="@color/sc_muted"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>

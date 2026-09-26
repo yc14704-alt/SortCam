@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="아이콘"
+        android:textColor="@color/sc_text"
+        android:textStyle="bold" />
+    <EditText
+        android:id="@+id/editCategoryEmoji"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="5dp"
+        android:hint="예: 📚"
+        android:maxLength="4"
+        android:singleLine="true"
+        android:padding="10dp"
+        android:background="@drawable/bg_secondary_button" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="분류 이름"
+        android:textColor="@color/sc_text"
+        android:textStyle="bold" />
+    <EditText
+        android:id="@+id/editCategoryName"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="5dp"
+        android:hint="예: 여행, 가족, 공부, 프로젝트"
+        android:maxLength="20"
+        android:singleLine="true"
+        android:padding="10dp"
+        android:background="@drawable/bg_secondary_button" />
+</LinearLayout>
