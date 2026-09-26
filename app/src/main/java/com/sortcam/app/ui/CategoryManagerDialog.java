@@ -60,7 +60,7 @@ public class CategoryManagerDialog {
 
         Button add = new Button(activity);
         add.setText("＋ 새 분류 추가");
-        add.setTextAllCaps(false);
+        add.setAllCaps(false);
         add.setOnClickListener(v -> showEditor(null));
         LinearLayout.LayoutParams addParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
@@ -96,14 +96,14 @@ public class CategoryManagerDialog {
 
             Button edit = new Button(activity);
             edit.setText("수정");
-            edit.setTextAllCaps(false);
+            edit.setAllCaps(false);
             edit.setOnClickListener(v -> showEditor(category));
             row.addView(edit, new LinearLayout.LayoutParams(dp(72), dp(48)));
 
             if (!category.isDefault) {
                 Button delete = new Button(activity);
                 delete.setText("삭제");
-                delete.setTextAllCaps(false);
+                delete.setAllCaps(false);
                 delete.setOnClickListener(v -> confirmDelete(category));
                 LinearLayout.LayoutParams deleteParams = new LinearLayout.LayoutParams(dp(72), dp(48));
                 deleteParams.leftMargin = dp(4);
