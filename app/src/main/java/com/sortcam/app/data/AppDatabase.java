@@ -14,7 +14,7 @@ import java.util.List;
 
 public class AppDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "sortcam.db";
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
 
     public AppDatabase(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -48,15 +48,48 @@ public class AppDatabase extends SQLiteOpenHelper {
                 "duration_ms INTEGER NOT NULL DEFAULT 0," +
                 "FOREIGN KEY(category_id) REFERENCES categories(id) ON DELETE RESTRICT)");
 
+        createImportsTable(db);
         seedDefaults(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 3) createImportsTable(db);
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE photos ADD COLUMN media_type TEXT NOT NULL DEFAULT 'photo'");
             db.execSQL("ALTER TABLE photos ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0");
         }
+    }
+
+    private void createImportsTable(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS photo_imports (source_uri TEXT PRIMARY KEY, photo_id INTEGER NOT NULL, " +
+                "FOREIGN KEY(photo_id) REFERENCES photos(id) ON DELETE CASCADE)");
+    }
+
+    public boolean hasImportedSource(String uri) {
+        try (Cursor c = getReadableDatabase().rawQuery("SELECT 1 FROM photo_imports WHERE source_uri=?", new String[]{uri})) {
+            return c.moveToFirst();
+        }
+    }
+
+    public boolean hasPhotoUri(String uri) {
+        try (Cursor c = getReadableDatabase().rawQuery("SELECT 1 FROM photos WHERE uri=?", new String[]{uri})) {
+            return c.moveToFirst();
+        }
+    }
+
+    public long insertImportedPhoto(PhotoRecord photo, String sourceUri) {
+        SQLiteDatabase database = getWritableDatabase();
+        database.beginTransaction();
+        try {
+            long id = insertPhoto(photo);
+            ContentValues values = new ContentValues();
+            values.put("source_uri", sourceUri);
+            values.put("photo_id", id);
+            database.insertOrThrow("photo_imports", null, values);
+            database.setTransactionSuccessful();
+            return id;
+        } finally { database.endTransaction(); }
     }
 
     public void ensureDefaults() {

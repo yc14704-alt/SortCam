@@ -19,6 +19,17 @@ import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.RadioGroup;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
+import com.sortcam.app.importer.PhotoImportModel;
 import android.widget.Chronometer;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -96,7 +107,11 @@ public class MainActivity extends AppCompatActivity {
     private Button btnCapture;
     private Button btnCategoryPicker;
     private Button btnModeToggle;
-    private Button btnSwitchCamera;
+    private ImageButton btnSwitchCamera;
+    private PhotoImportModel importModel;
+    private boolean searchAny;
+    private final ActivityResultLauncher<PickVisualMediaRequest> galleryPicker = registerForActivityResult(
+            new ActivityResultContracts.PickMultipleVisualMedia(100), this::chooseImportCategory);
     private Button btnCloseLibrary;
     private Button btnFilterAll;
     private Button btnFilterPhotos;
@@ -118,7 +133,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_main);
+        View root = findViewById(R.id.rootLayout);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            Insets keyboard = insets.getInsets(WindowInsetsCompat.Type.ime());
+            v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, keyboard.bottom));
+            return WindowInsetsCompat.CONSUMED;
+        });
+        ViewCompat.requestApplyInsets(root);
 
         db = new AppDatabase(this);
         db.ensureDefaults();
@@ -126,9 +150,18 @@ public class MainActivity extends AppCompatActivity {
         bindViews();
         setupGallery();
         setupActions();
+        importModel = new ViewModelProvider(this).get(PhotoImportModel.class);
+        importModel.progress().observe(this, progress -> {
+            TextView status = findViewById(R.id.txtImportStatus);
+            status.setVisibility(View.VISIBLE);
+            status.setText(progress.message);
+            findViewById(R.id.btnImportPhotos).setEnabled(!progress.running);
+            loadMedia();
+        });
         reloadCategories();
         loadMedia();
         showCameraTab();
+        updateModeUi();
         ensureCameraPermission();
     }
 
@@ -168,6 +201,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupActions() {
+        findViewById(R.id.btnImportPhotos).setOnClickListener(v -> {
+            if (!importModel.isRunning()) galleryPicker.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build());
+        });
+        ((RadioGroup) findViewById(R.id.searchMode)).setOnCheckedChangeListener((group, checked) -> {
+            searchAny = checked == R.id.searchAny;
+            loadMedia();
+        });
         btnCategoryPicker.setOnClickListener(v -> showCategoryPicker());
         findViewById(R.id.btnManageCategories).setOnClickListener(v -> showCategoryManager());
         btnCapture.setOnClickListener(v -> {
@@ -192,6 +232,22 @@ public class MainActivity extends AppCompatActivity {
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { loadMedia(); }
             @Override public void afterTextChanged(Editable s) {}
         });
+    }
+
+    private void chooseImportCategory(List<Uri> uris) {
+        if (uris.isEmpty() || isFinishing()) return;
+        List<Category> categories = db.getCategories();
+        String[] labels = new String[categories.size()];
+        for (int i = 0; i < categories.size(); i++) labels[i] = categories.get(i).emoji + " " + categories.get(i).name;
+        new AlertDialog.Builder(this)
+                .setTitle(uris.size() + "장 · 저장할 분류 선택")
+                .setItems(labels, (dialog, which) -> {
+                    Category category = categories.get(which);
+                    importModel.start(uris, category.id, mediaPathFor(PhotoRecord.TYPE_PHOTO, category.name));
+                })
+                .setNegativeButton("취소", null)
+                .show();
+        Toast.makeText(this, "원본은 유지하고 SortCam에 복사한 뒤 글자·숫자를 인식합니다.", Toast.LENGTH_LONG).show();
     }
 
     private void reloadCategories() {
@@ -249,7 +305,9 @@ public class MainActivity extends AppCompatActivity {
         cameraPanel.setVisibility(View.VISIBLE);
         getWindow().setStatusBarColor(Color.BLACK);
         getWindow().setNavigationBarColor(Color.BLACK);
-        getWindow().getDecorView().setSystemUiVisibility(0);
+        findViewById(R.id.rootLayout).setBackgroundColor(Color.BLACK);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightNavigationBars(false);
         updateSelectedCategoryLabel();
     }
 
@@ -262,7 +320,9 @@ public class MainActivity extends AppCompatActivity {
         libraryPanel.setVisibility(View.VISIBLE);
         getWindow().setStatusBarColor(getColor(R.color.sc_surface));
         getWindow().setNavigationBarColor(getColor(R.color.sc_surface));
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        findViewById(R.id.rootLayout).setBackgroundColor(getColor(R.color.sc_surface));
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(true);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightNavigationBars(true);
         loadMedia();
     }
 
@@ -364,16 +424,16 @@ public class MainActivity extends AppCompatActivity {
         if (activeRecording != null) {
             btnCapture.setBackgroundResource(R.drawable.bg_shutter_recording);
             btnCapture.setText("■");
-            btnModeToggle.setText("🎬 동영상");
+            btnModeToggle.setText("사진 / ● 동영상");
             return;
         }
         btnCapture.setText("");
         if (captureMode == CaptureMode.PHOTO) {
             btnCapture.setBackgroundResource(R.drawable.bg_shutter_photo);
-            btnModeToggle.setText("📷 사진");
+            btnModeToggle.setText("● 사진 / 동영상");
         } else {
             btnCapture.setBackgroundResource(R.drawable.bg_shutter_video);
-            btnModeToggle.setText("🎬 동영상");
+            btnModeToggle.setText("사진 / ● 동영상");
         }
     }
 
@@ -455,6 +515,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String text) {
                 runOnUiThread(() -> {
+                    if (isDestroyed()) return;
                     PhotoRecord current = db.getPhoto(mediaId);
                     if (current == null) return;
                     String ocr = text == null ? "" : text.trim();
@@ -601,12 +662,12 @@ public class MainActivity extends AppCompatActivity {
         List<PhotoRecord> filtered = new ArrayList<>();
         for (PhotoRecord p : all) {
             if (!"all".equals(mediaFilter) && !mediaFilter.equals(p.mediaType)) continue;
-            if (SearchIndex.matches(p, map.get(p.categoryId), query)) filtered.add(p);
+            if (SearchIndex.matches(p, map.get(p.categoryId), query, searchAny)) filtered.add(p);
         }
 
         photoAdapter.submit(filtered, categories);
         String prefix = query.trim().isEmpty() ? "" : "검색 결과 ";
-        txtPhotoCount.setText(prefix + filtered.size() + "개 · 사진과 동영상은 각각 #사진 / #동영상으로 자동 분류됩니다.");
+        txtPhotoCount.setText(prefix + filtered.size() + "개 · 검색어는 띄어쓰기 또는 쉼표로 구분");
         txtEmpty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         findViewById(R.id.photoRecycler).setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
         updateLatestThumbnail(all);
@@ -724,6 +785,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String text) {
                 runOnUiThread(() -> {
+                    if (isDestroyed()) return;
                     PhotoRecord current = db.getPhoto(media.id);
                     if (current == null) return;
                     String tags = ensureAutoTag(current.tags, current.mediaType);

@@ -36,12 +36,25 @@ public final class SearchIndex {
     }
 
     public static boolean matches(PhotoRecord media, Category category, String query) {
-        String q = normalize(query);
-        if (q.isEmpty()) return true;
+        return matches(media, category, query, false);
+    }
+
+    public static boolean matches(PhotoRecord media, Category category, String query, boolean matchAny) {
+        if (safe(query).trim().isEmpty()) return true;
         String mediaWords = media.isVideo() ? "동영상 영상 비디오 video movie" : "사진 이미지 photo image";
         String haystack = mediaWords + " " + safe(category == null ? "" : category.name) + " " +
                 safe(media.tags) + " " + safe(media.memo) + " " + safe(media.ocrText) + " " + safe(media.aiIndex);
-        return normalize(haystack).contains(q);
+        String normalized = normalize(haystack);
+        boolean hasTerm = false;
+        for (String raw : safe(query).split("[\\s,，;；]+")) {
+            String term = normalize(raw);
+            if (term.isEmpty()) continue;
+            hasTerm = true;
+            boolean found = normalized.contains(term);
+            if (matchAny && found) return true;
+            if (!matchAny && !found) return false;
+        }
+        return !hasTerm || !matchAny;
     }
 
     public static String preview(String mediaType, String ocrText) {

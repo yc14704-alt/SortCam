@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout android:id="@+id/rootLayout" xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
@@ -42,18 +42,6 @@
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
-            <Button
-                android:id="@+id/btnSwitchCamera"
-                android:layout_width="54dp"
-                android:layout_height="46dp"
-                android:background="@drawable/bg_camera_chip"
-                android:contentDescription="전면 후면 카메라 전환"
-                android:minWidth="0dp"
-                android:padding="0dp"
-                android:text="↻"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textSize="22sp" />
         </LinearLayout>
 
         <TextView
@@ -93,7 +81,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="132dp"
+            android:layout_marginBottom="176dp"
             android:background="@drawable/bg_camera_chip"
             android:gravity="center_vertical"
             android:orientation="horizontal"
@@ -125,98 +113,33 @@
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="112dp"
-            android:layout_gravity="bottom"
-            android:background="#B3000000"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:paddingStart="18dp"
-            android:paddingEnd="18dp">
-
-            <LinearLayout
-                android:id="@+id/btnOpenLibrary"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical|start"
-                android:orientation="vertical"
-                android:paddingTop="15dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <FrameLayout
-                    android:layout_width="58dp"
-                    android:layout_height="58dp">
-                    <ImageView
-                        android:id="@+id/imgLatest"
-                        android:layout_width="58dp"
-                        android:layout_height="58dp"
-                        android:background="@drawable/bg_secondary_button"
-                        android:contentDescription="최근 사진 또는 동영상, 앨범 열기"
-                        android:scaleType="centerCrop" />
-                    <TextView
-                        android:id="@+id/txtLatestType"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="bottom|end"
-                        android:background="#B3000000"
-                        android:paddingStart="4dp"
-                        android:paddingEnd="4dp"
-                        android:text=""
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp" />
+            android:layout_width="match_parent" android:layout_height="156dp"
+            android:layout_gravity="bottom" android:orientation="vertical"
+            android:background="#66000000" android:paddingStart="24dp" android:paddingEnd="24dp">
+            <RelativeLayout android:layout_width="match_parent" android:layout_height="108dp">
+                <FrameLayout android:id="@+id/btnOpenLibrary"
+                    android:layout_width="60dp" android:layout_height="60dp"
+                    android:layout_alignParentStart="true" android:layout_centerVertical="true"
+                    android:clickable="true" android:focusable="true" android:contentDescription="앨범 열기">
+                    <ImageView android:id="@+id/imgLatest" android:layout_width="match_parent"
+                        android:layout_height="match_parent" android:background="@drawable/bg_camera_circle"
+                        android:clipToOutline="true" android:scaleType="centerCrop" android:contentDescription="최근 사진" />
+                    <TextView android:id="@+id/txtLatestType" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:layout_gravity="bottom|center_horizontal"
+                        android:background="#99000000" android:textColor="#FFFFFF" android:textSize="11sp" />
                 </FrameLayout>
-                <TextView
-                    android:layout_width="58dp"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:paddingTop="2dp"
-                    android:text="앨범"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <Button
-                android:id="@+id/btnCapture"
-                android:layout_width="82dp"
-                android:layout_height="82dp"
-                android:background="@drawable/bg_shutter_photo"
-                android:contentDescription="촬영"
-                android:minWidth="0dp"
-                android:padding="0dp"
-                android:text=""
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textSize="24sp" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical|end"
-                android:orientation="vertical"
-                android:paddingTop="22dp">
-                <Button
-                    android:id="@+id/btnModeToggle"
-                    android:layout_width="86dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_camera_chip"
-                    android:minWidth="0dp"
-                    android:text="📷 사진"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-                <TextView
-                    android:layout_width="86dp"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:paddingTop="3dp"
-                    android:text="눌러서 전환"
-                    android:textColor="#D0FFFFFF"
-                    android:textSize="10sp" />
-            </LinearLayout>
+                <Button android:id="@+id/btnCapture" android:layout_width="82dp" android:layout_height="82dp"
+                    android:layout_centerInParent="true" android:background="@drawable/bg_shutter_photo"
+                    android:contentDescription="촬영" android:minWidth="0dp" android:padding="0dp"
+                    android:text="" android:textColor="#FFFFFF" android:textSize="24sp" />
+                <ImageButton android:id="@+id/btnSwitchCamera" android:layout_width="60dp" android:layout_height="60dp"
+                    android:layout_alignParentEnd="true" android:layout_centerVertical="true"
+                    android:background="@drawable/bg_camera_circle" android:src="@drawable/ic_switch_camera"
+                    android:padding="14dp" android:contentDescription="전면 후면 카메라 전환" />
+            </RelativeLayout>
+            <Button android:id="@+id/btnModeToggle" android:layout_width="160dp" android:layout_height="48dp"
+                android:layout_gravity="center_horizontal" android:background="@drawable/bg_camera_chip"
+                android:text="사진  /  동영상" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="14sp" />
         </LinearLayout>
     </FrameLayout>
 
@@ -273,6 +196,14 @@
                 android:textColor="@color/sc_text" />
         </LinearLayout>
 
+        <Button android:id="@+id/btnImportPhotos" android:layout_width="match_parent"
+            android:layout_height="48dp" android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
+            android:layout_marginTop="6dp" android:background="@drawable/bg_primary_button"
+            android:text="＋ 갤러리 사진 가져오기" android:textColor="#FFFFFF" android:textAllCaps="false" />
+        <TextView android:id="@+id/txtImportStatus" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:paddingTop="4dp" android:textSize="12sp" android:textColor="@color/sc_muted"
+            android:visibility="gone" android:accessibilityLiveRegion="polite" />
         <EditText
             android:id="@+id/editSearch"
             android:layout_width="match_parent"
@@ -281,7 +212,7 @@
             android:layout_marginTop="10dp"
             android:layout_marginEnd="12dp"
             android:background="@drawable/bg_card"
-            android:hint="🔎 사진·동영상·계약서·송장번호·전화번호 검색"
+            android:hint="검색어 여러 개: 업무 1234 계약서"
             android:inputType="text"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
@@ -290,6 +221,14 @@
             android:textColorHint="@color/sc_muted"
             android:textSize="15sp" />
 
+        <RadioGroup android:id="@+id/searchMode" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="horizontal" android:paddingStart="12dp"
+            android:checkedButton="@id/searchAll">
+            <RadioButton android:id="@+id/searchAll" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="48dp" android:text="모두 포함" android:textSize="13sp" />
+            <RadioButton android:id="@+id/searchAny" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="48dp" android:text="하나라도 포함" android:textSize="13sp" />
+        </RadioGroup>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="52dp"
@@ -358,7 +297,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:padding="24dp"
-            android:text="아직 저장된 미디어가 없습니다.\n‹ 카메라를 눌러 첫 사진이나 동영상을 찍어보세요."
+            android:text="사진을 촬영하거나 갤러리에서 가져오세요.\n검색어는 띄어쓰기 또는 쉼표로 구분합니다."
             android:textColor="@color/sc_muted"
             android:textSize="14sp"
             android:visibility="gone" />
