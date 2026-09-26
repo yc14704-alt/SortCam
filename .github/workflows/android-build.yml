@@ -24,12 +24,9 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Install Android 36 SDK
-        run: yes | sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
-
-      - name: Accept Android licenses
-        run: yes | sdkmanager --licenses || true
+        with:
+          packages: platform-tools platforms;android-36 build-tools;36.0.0
+          log-accepted-android-sdk-licenses: false
 
       - name: Set up Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
